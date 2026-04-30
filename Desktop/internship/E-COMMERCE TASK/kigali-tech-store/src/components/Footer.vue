@@ -9,7 +9,7 @@ import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'luc
         <!-- Company Info -->
         <div>
           <div class="flex items-center space-x-2 mb-4">
-            <div class="w-8 h-8 bg-gradient-to-br from-primary-DEFAULT to-secondary-DEFAULT rounded-lg"></div>
+            <div class="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg"></div>
             <span class="text-lg font-bold text-white">Kigali Tech Store</span>
           </div>
           <p class="text-sm text-gray-400">
@@ -21,10 +21,10 @@ import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'luc
         <div>
           <h4 class="font-semibold text-white mb-4">Quick Links</h4>
           <ul class="space-y-2 text-sm">
-            <li><a href="/" class="hover:text-primary-DEFAULT transition">Home</a></li>
-            <li><a href="/products" class="hover:text-primary-DEFAULT transition">Products</a></li>
-            <li><a href="#" class="hover:text-primary-DEFAULT transition">Categories</a></li>
-            <li><a href="#" class="hover:text-primary-DEFAULT transition">Best Sellers</a></li>
+            <li><a href="/" class="hover:text-primary transition">Home</a></li>
+            <li><a href="/products" class="hover:text-primary transition">Products</a></li>
+            <li><a href="#" class="hover:text-primary transition">Categories</a></li>
+            <li><a href="#" class="hover:text-primary transition">Best Sellers</a></li>
           </ul>
         </div>
 
@@ -32,10 +32,10 @@ import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'luc
         <div>
           <h4 class="font-semibold text-white mb-4">Support</h4>
           <ul class="space-y-2 text-sm">
-            <li><a href="#" class="hover:text-primary-DEFAULT transition">Contact Us</a></li>
-            <li><a href="#" class="hover:text-primary-DEFAULT transition">FAQ</a></li>
-            <li><a href="#" class="hover:text-primary-DEFAULT transition">Shipping Info</a></li>
-            <li><a href="#" class="hover:text-primary-DEFAULT transition">Returns</a></li>
+            <li><a href="#" class="hover:text-primary transition">Contact Us</a></li>
+            <li><a href="#" class="hover:text-primary transition">FAQ</a></li>
+            <li><a href="#" class="hover:text-primary transition">Shipping Info</a></li>
+            <li><a href="#" class="hover:text-primary transition">Returns</a></li>
           </ul>
         </div>
 
@@ -67,16 +67,16 @@ import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'luc
 
           <!-- Social Media -->
           <div class="flex items-center space-x-4">
-            <a href="#" class="text-gray-400 hover:text-primary-DEFAULT transition">
+            <a href="#" class="text-gray-400 hover:text-primary transition">
               <Facebook class="w-5 h-5" />
             </a>
-            <a href="#" class="text-gray-400 hover:text-primary-DEFAULT transition">
+            <a href="#" class="text-gray-400 hover:text-primary transition">
               <Twitter class="w-5 h-5" />
             </a>
-            <a href="#" class="text-gray-400 hover:text-primary-DEFAULT transition">
+            <a href="#" class="text-gray-400 hover:text-primary transition">
               <Instagram class="w-5 h-5" />
             </a>
-            <a href="#" class="text-gray-400 hover:text-primary-DEFAULT transition">
+            <a href="#" class="text-gray-400 hover:text-primary transition">
               <Linkedin class="w-5 h-5" />
             </a>
           </div>

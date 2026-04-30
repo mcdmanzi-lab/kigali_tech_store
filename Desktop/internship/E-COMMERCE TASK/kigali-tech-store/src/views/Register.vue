@@ -53,8 +53,9 @@ function handleKeyPress(e) {
 </script>
 
 <template>
-  <div class="max-w-md mx-auto my-12">
-    <div class="bg-white rounded-lg shadow-md p-8">
+  <div>
+    <div class="max-w-md mx-auto">
+      <div class="bg-white rounded-lg shadow-md p-8">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">Create Account</h1>
 
       <ErrorMessage v-if="error" :message="error" @dismiss="error = null" />
@@ -145,7 +146,7 @@ function handleKeyPress(e) {
       <!-- Login Link -->
       <p class="text-center text-gray-600">
         Already have an account?
-        <router-link to="/login" class="text-primary-DEFAULT hover:text-primary-dark font-semibold">
+        <router-link to="/login" class="text-primary hover:text-primary-dark font-semibold">
           Login
         </router-link>
       </p>
@@ -154,6 +155,7 @@ function handleKeyPress(e) {
       <p class="text-xs text-gray-500 text-center mt-6">
         By signing up, you agree to our Terms of Service and Privacy Policy
       </p>
+      </div>
     </div>
   </div>
 </template>

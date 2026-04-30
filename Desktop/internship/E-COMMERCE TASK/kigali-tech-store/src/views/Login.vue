@@ -43,8 +43,9 @@ function handleKeyPress(e) {
 </script>
 
 <template>
-  <div class="max-w-md mx-auto my-12">
-    <div class="bg-white rounded-lg shadow-md p-8">
+  <div>
+    <div class="max-w-md mx-auto">
+      <div class="bg-white rounded-lg shadow-md p-8">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">Login</h1>
 
       <ErrorMessage v-if="error" :message="error" @dismiss="error = null" />
@@ -60,7 +61,7 @@ function handleKeyPress(e) {
               type="email"
               placeholder="your@email.com"
               @keypress="handleKeyPress"
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
         </div>
@@ -75,7 +76,7 @@ function handleKeyPress(e) {
               type="password"
               placeholder="••••••••"
               @keypress="handleKeyPress"
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
         </div>
@@ -104,7 +105,7 @@ function handleKeyPress(e) {
       <!-- Register Link -->
       <p class="text-center text-gray-600">
         Don't have an account?
-        <router-link to="/register" class="text-primary-DEFAULT hover:text-primary-dark font-semibold">
+        <router-link to="/register" class="text-primary hover:text-primary-dark font-semibold">
           Sign up
         </router-link>
       </p>
@@ -114,6 +115,7 @@ function handleKeyPress(e) {
         <p class="text-xs text-blue-800">
           <strong>Demo Mode:</strong> Use any email and password (min 6 chars) to login.
         </p>
+      </div>
       </div>
     </div>
   </div>

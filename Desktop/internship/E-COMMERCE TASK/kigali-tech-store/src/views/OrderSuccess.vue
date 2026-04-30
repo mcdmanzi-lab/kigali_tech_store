@@ -23,7 +23,7 @@ const formattedDate = computed(() => {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto my-12">
+  <div>
     <div v-if="order" class="space-y-8">
       <!-- Success Header -->
       <div class="text-center space-y-4">
@@ -63,7 +63,7 @@ const formattedDate = computed(() => {
           <!-- Total -->
           <div>
             <p class="text-xs text-gray-500 uppercase mb-1">Total</p>
-            <p class="font-bold text-primary-DEFAULT text-lg">RWF {{ Math.round(order.total * 1200).toLocaleString() }}</p>
+            <p class="font-bold text-primary text-lg">RWF {{ Math.round(order.total * 1200).toLocaleString() }}</p>
           </div>
         </div>
 
@@ -71,7 +71,7 @@ const formattedDate = computed(() => {
         <div>
           <h3 class="font-bold text-gray-900 mb-3">Shipping Address</h3>
           <div class="flex items-start space-x-3 text-gray-700">
-            <MapPin class="w-5 h-5 text-primary-DEFAULT flex-shrink-0 mt-1" />
+            <MapPin class="w-5 h-5 text-primary flex-shrink-0 mt-1" />
             <div>
               <p>{{ order.customer.name }}</p>
               <p>{{ order.customer.address }}</p>

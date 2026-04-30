@@ -14,6 +14,7 @@ const searchInput = ref('')
 const priceMin = ref(0)
 const priceMax = ref(1000)
 const selectedCategory = ref(null)
+const isDesktop = ref(true)
 
 onMounted(async () => {
   // Fetch products if not already fetched
@@ -32,15 +33,27 @@ onMounted(async () => {
     searchInput.value = route.query.search
     productsStore.setSearchQuery(searchInput.value)
   }
+
+  // Initialize desktop responsive state
+  if (typeof window !== 'undefined') {
+    isDesktop.value = window.innerWidth >= 1024
+    window.addEventListener('resize', () => {
+      isDesktop.value = window.innerWidth >= 1024
+    })
+  }
 })
 
 const displayedProducts = computed(() => {
   return productsStore.filteredProducts
 })
 
-const displayedCount = computed(() => {
-  return displayedProducts.value.length
+// Performance: only render a subset and allow loading more
+const visibleCount = ref(12)
+const visibleProducts = computed(() => {
+  return displayedProducts.value.slice(0, visibleCount.value)
 })
+
+const displayedCount = computed(() => displayedProducts.value.length)
 
 function applyFilters() {
   productsStore.setSearchQuery(searchInput.value)
@@ -72,8 +85,8 @@ function updateSearchQuery() {
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
       <!-- Sidebar Filters -->
-      <div v-if="showFilters || window.innerWidth >= 1024" class="lg:col-span-1">
-        <div class="sticky top-24 space-y-6">
+      <div v-if="showFilters || isDesktop" class="lg:col-span-1 mb-8 lg:mb-0">
+        <div class="lg:sticky top-24 space-y-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <!-- Search -->
           <div>
             <label class="block text-sm font-semibold text-gray-900 mb-3">Search</label>
@@ -146,11 +159,13 @@ function updateSearchQuery() {
         <div class="lg:hidden mb-6">
           <button
             @click="showFilters = !showFilters"
-            class="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg"
+            class="flex items-center justify-between w-full px-4 py-3 bg-white shadow-sm border border-gray-200 rounded-xl font-semibold text-gray-800"
           >
-            <ChevronDown class="w-4 h-4" />
-            <span>Filters</span>
-            <X v-if="showFilters" class="w-4 h-4 ml-auto" />
+            <div class="flex items-center space-x-2">
+              <ChevronDown :class="{'rotate-180': showFilters}" class="w-5 h-5 transition-transform" />
+              <span>{{ showFilters ? 'Hide Filters' : 'Show Filters' }}</span>
+            </div>
+            <X v-if="showFilters" class="w-5 h-5 text-gray-400" />
           </button>
         </div>
 
@@ -158,8 +173,12 @@ function updateSearchQuery() {
         <LoadingSpinner v-if="productsStore.loading" />
 
         <!-- Products Grid -->
-        <div v-else-if="displayedProducts.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-          <ProductCard v-for="product in displayedProducts" :key="product.id" :product="product" />
+        <div v-else-if="displayedProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          <ProductCard v-for="product in visibleProducts" :key="product.id" :product="product" />
+        </div>
+        <!-- Load more -->
+        <div v-if="visibleCount < displayedCount" class="mt-8 flex justify-center">
+          <button @click="visibleCount += 12" class="btn-primary px-6 py-2 text-base">Load more</button>
         </div>
 
         <!-- Empty State -->

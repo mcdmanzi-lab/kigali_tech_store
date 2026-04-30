@@ -32,11 +32,15 @@ function toggleWishlist() {
       <img
         :src="product.image"
         :alt="product.title"
+        loading="lazy"
+        decoding="async"
         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
       />
       <button
         @click="toggleWishlist"
         class="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition"
+        :aria-pressed="isInWishlist"
+        :aria-label="isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'"
       >
         <Heart
           :class="['w-5 h-5 transition', isInWishlist ? 'fill-kigali-red text-kigali-red' : 'text-gray-400']"
@@ -63,7 +67,7 @@ function toggleWishlist() {
 
       <!-- Price -->
       <div class="mb-4">
-        <p class="text-lg font-bold text-primary-DEFAULT">
+        <p class="text-lg font-bold text-primary">
           RWF {{ Math.round(product.price * 1200).toLocaleString() }}
         </p>
         <p class="text-xs text-gray-500">{{ product.price.toFixed(2) }} USD</p>
@@ -73,6 +77,7 @@ function toggleWishlist() {
       <button
         @click="addToCart"
         class="btn-primary w-full flex items-center justify-center space-x-2 text-sm"
+        aria-label="Add to cart"
       >
         <ShoppingCart class="w-4 h-4" />
         <span>Add to Cart</span>

@@ -83,7 +83,7 @@ function updateQuantity(val) {
     <!-- Back Button -->
     <button
       @click="goBack"
-      class="flex items-center space-x-2 text-primary-DEFAULT hover:text-primary-dark transition mb-6"
+      class="flex items-center space-x-2 text-primary hover:text-primary-dark transition mb-6"
     >
       <ChevronLeft class="w-5 h-5" />
       <span>Back to Products</span>
@@ -96,10 +96,16 @@ function updateQuantity(val) {
     <LoadingSpinner v-if="loading" />
 
     <!-- Product Detail -->
-    <div v-else-if="product" class="grid grid-cols-1 md:grid-cols-2 gap-12">
+    <div v-else-if="product" class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
       <!-- Product Image -->
-      <div class="flex items-center justify-center bg-white rounded-lg p-8">
-        <img :src="product.image" :alt="product.title" class="max-h-96 max-w-full object-contain" />
+      <div class="flex items-center justify-center bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+        <img
+          :src="product.image"
+          :alt="product.title"
+          loading="lazy"
+          decoding="async"
+          class="max-h-96 max-w-full object-contain transform hover:scale-105 transition-transform duration-500"
+        />
       </div>
 
       <!-- Product Info -->
@@ -131,13 +137,15 @@ function updateQuantity(val) {
         <!-- Quantity & Actions -->
         <div class="space-y-4">
           <div class="flex items-center space-x-4">
-            <label class="text-sm font-semibold text-gray-700">Quantity:</label>
+            <label class="text-sm font-semibold text-gray-700" for="quantity-input">Quantity:</label>
             <input
+              id="quantity-input"
               :value="quantity"
               @input="updateQuantity($event.target.value)"
               type="number"
               min="1"
-              class="w-16 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
+              aria-label="Quantity"
+              class="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center"
             />
           </div>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
@@ -14,7 +14,19 @@ const ordersStore = useOrdersStore()
 
 const step = ref(1) // 1: Address, 2: Payment, 3: Review
 const loading = ref(false)
-const error = ref(null)
+const error = ref<string | null>(null)
+const paymentReady = ref(false)
+const stripeInitializing = ref(false)
+
+// Stripe Elements
+import { loadStripe } from '@stripe/stripe-js'
+const stripeKey = import.meta.env.VITE_STRIPE_PK === 'pk_test_51TRdLLFE5wDnFzKJxz5wF1NFXWTr5jLry52yGgD5Gmg8eb6Rcq5332xpBOVrIF1Y10mnK0Iu3B5pEu27gb6jH62p00PMjhhv81' 
+  ? 'pk_test_51TRSonIEP3FIahdKjjOm4rSJ5eDQuzzVJVKQTRkH6PRXgRuFUWZbC0IRotFsclkC0s3BPfgAOn53dK3pdHaecUtt001eUXnMr6' 
+  : (import.meta.env.VITE_STRIPE_PK || 'pk_test_51TRSonIEP3FIahdKjjOm4rSJ5eDQuzzVJVKQTRkH6PRXgRuFUWZbC0IRotFsclkC0s3BPfgAOn53dK3pdHaecUtt001eUXnMr6')
+let stripe: any = null
+let elements: any = null
+let card: any = null
+const cardElement = ref<HTMLElement | null>(null)
 
 // Form data
 const formData = ref({
@@ -39,11 +51,11 @@ const shipping = computed(() => cartStore.SHIPPING)
 const total = computed(() => cartStore.total)
 const cartItems = computed(() => cartStore.items)
 
-function formatCardNumber(value) {
+function formatCardNumber(value: string) {
   return value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim()
 }
 
-function formatExpiry(value) {
+function formatExpiry(value: string) {
   return value.replace(/\D/g, '').replace(/(\d{2})(\d{0,2})/, '$1/$2').substring(0, 5)
 }
 
@@ -60,28 +72,86 @@ function validateStep1() {
 }
 
 function validateStep2() {
-  if (!formData.value.cardName || !formData.value.cardNumber || !formData.value.cardCVC) {
-    error.value = 'Please fill in all payment details'
+  if (!formData.value.cardName) {
+    error.value = 'Please enter the cardholder name'
     return false
   }
-  if (formData.value.cardNumber.replace(/\s/g, '').length !== 16) {
-    error.value = 'Please enter a valid card number'
-    return false
-  }
-  if (formData.value.cardCVC.length !== 3) {
-    error.value = 'Please enter a valid CVC'
+  if (!card || !paymentReady.value) {
+    error.value = 'Payment form is not ready. Please wait a moment.'
     return false
   }
   return true
 }
 
-function nextStep() {
+async function nextStep() {
   error.value = null
-  
+
   if (step.value === 1 && validateStep1()) {
     step.value = 2
+    await initializeStripe()
   } else if (step.value === 2 && validateStep2()) {
     step.value = 3
+  }
+}
+
+async function initializeStripe() {
+  console.log('Initializing Stripe on step 2...')
+  paymentReady.value = false
+  stripeInitializing.value = true
+
+  if (!stripeKey) {
+    error.value = 'Stripe not configured'
+    stripeInitializing.value = false
+    return
+  }
+
+  try {
+    if (!stripe) {
+      stripe = await loadStripe(stripeKey)
+      console.log('Stripe library loaded')
+    }
+
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    const cardElementContainer = cardElement.value || document.getElementById('card-element')
+    console.log('Card element container found:', !!cardElementContainer)
+
+    if (cardElementContainer) {
+      if (!card) {
+        elements = stripe.elements()
+        card = elements.create('card', {
+          style: {
+            base: {
+              fontSize: '16px',
+              color: '#424770',
+              '::placeholder': { color: '#aab7c4' }
+            },
+            invalid: { color: '#9e2146' }
+          }
+        })
+        
+        card.on('change', (event: any) => {
+          if (event.error) {
+            error.value = event.error.message
+          } else if (error.value && error.value.includes('card')) {
+            error.value = null
+          }
+        })
+      }
+      
+      card.mount(cardElementContainer)
+      console.log('Card mounted successfully')
+      paymentReady.value = true
+    } else {
+      console.error('Card element container not found after DOM update')
+      error.value = 'Payment form not ready. Please reload the page.'
+    }
+  } catch (err) {
+    console.error('Stripe init error:', err)
+    error.value = 'Failed to load payment form'
+  } finally {
+    stripeInitializing.value = false
   }
 }
 
@@ -96,14 +166,68 @@ async function completeOrder() {
   error.value = null
 
   try {
-    // Mock payment processing
+    // Create PaymentIntent on the server and confirm with Stripe Elements
+    if (!stripe || !card) {
+      throw new Error('Stripe not initialized properly')
+    }
+
+    console.log('Starting payment process...')
+    
+    // Create PaymentIntent on backend
+    const resp = await fetch('http://localhost:4242/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: Math.round(total.value * 100), currency: 'usd' }),
+    })
+    
+    if (!resp.ok) {
+      const errorData = await resp.json()
+      throw new Error(errorData.error || 'Failed to create payment intent')
+    }
+    
+    const intent = await resp.json()
+    console.log('PaymentIntent created:', intent)
+    
+    const clientSecret = intent.clientSecret
+    if (!clientSecret) {
+      throw new Error('No client secret received from server')
+    }
+
+    // Confirm payment with Stripe using the card element
+    console.log('Confirming payment...')
+    const { paymentIntent, error: stripeError } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card,
+        billing_details: {
+          name: `${formData.value.firstName} ${formData.value.lastName}`,
+          email: formData.value.email,
+          address: {
+            line1: formData.value.address,
+            city: formData.value.city,
+          }
+        },
+      },
+    })
+
+    if (stripeError) {
+      console.error('Stripe error:', stripeError)
+      throw new Error(stripeError.message || 'Payment failed')
+    }
+
+    console.log('Payment result:', paymentIntent)
+
+    if (!paymentIntent || paymentIntent.status !== 'succeeded') {
+      throw new Error('Payment was not completed successfully')
+    }
+
+    // Create order
     const order = ordersStore.createOrder({
       customer: {
         name: `${formData.value.firstName} ${formData.value.lastName}`,
         email: formData.value.email,
         phone: formData.value.phone,
         address: formData.value.address,
-        city: formData.value.city
+        city: formData.value.city,
       },
       items: cartItems.value,
       subtotal: subtotal.value,
@@ -111,31 +235,46 @@ async function completeOrder() {
       shipping: shipping.value,
       total: total.value,
       paymentMethod: 'card',
-      cardLast4: formData.value.cardNumber.slice(-4)
+      cardLast4: paymentIntent.charges?.data?.[0]?.payment_method_details?.card?.last4 || null,
+      paymentToken: paymentIntent.id,
     })
 
-    // Simulate payment processing (2 second delay)
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    // Complete the order
-    ordersStore.completeOrder(order.id, `pi_mock_${Date.now()}`)
-
-    // Clear cart
+    ordersStore.completeOrder(order.id, paymentIntent.id)
     cartStore.clearCart()
-
-    // Redirect to success page
+    console.log('Order completed successfully:', order.id)
     router.push(`/order-success/${order.id}`)
   } catch (err) {
-    error.value = 'Failed to process order. Please try again.'
+    console.error('Payment error:', err)
+    error.value = err.message || 'Failed to process payment. Please try again.'
   } finally {
     loading.value = false
   }
 }
+
+onMounted(async () => {
+  console.log('Checkout component mounted')
+  // Initialize Stripe library early, but don't mount card element yet
+  if (stripeKey) {
+    try {
+      stripe = await loadStripe(stripeKey)
+      console.log('Stripe library loaded')
+    } catch (err) {
+      console.error('Failed to load Stripe:', err)
+    }
+  }
+})
+
+onBeforeUnmount(() => {
+  if (card) {
+    card.unmount()
+    card = null
+  }
+})
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto my-8">
-    <button @click="() => router.back()" class="flex items-center space-x-2 text-primary-DEFAULT hover:text-primary-dark mb-6">
+  <div>
+    <button @click="() => router.back()" class="flex items-center space-x-2 text-primary hover:text-primary-dark mb-6">
       <ChevronLeft class="w-5 h-5" />
       <span>Back</span>
     </button>
@@ -143,18 +282,18 @@ async function completeOrder() {
     <h1 class="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
 
     <!-- Step Indicator -->
-    <div class="flex justify-between mb-8">
-      <div :class="['flex items-center', step >= 1 ? 'text-primary-DEFAULT' : 'text-gray-300']">
-        <MapPin class="w-6 h-6 mr-2" />
-        <span>Shipping</span>
+    <div class="flex justify-between mb-8 text-sm sm:text-base">
+      <div :class="['flex items-center', step >= 1 ? 'text-primary' : 'text-gray-300']">
+        <MapPin class="w-5 h-5 sm:w-6 sm:h-6 mr-1 sm:mr-2" />
+        <span class="hidden sm:inline">Shipping</span>
       </div>
-      <div :class="['flex items-center', step >= 2 ? 'text-primary-DEFAULT' : 'text-gray-300']">
-        <CreditCard class="w-6 h-6 mr-2" />
-        <span>Payment</span>
+      <div :class="['flex items-center', step >= 2 ? 'text-primary' : 'text-gray-300']">
+        <CreditCard class="w-5 h-5 sm:w-6 sm:h-6 mr-1 sm:mr-2" />
+        <span class="hidden sm:inline">Payment</span>
       </div>
-      <div :class="['flex items-center', step >= 3 ? 'text-primary-DEFAULT' : 'text-gray-300']">
-        <ShoppingBag class="w-6 h-6 mr-2" />
-        <span>Review</span>
+      <div :class="['flex items-center', step >= 3 ? 'text-primary' : 'text-gray-300']">
+        <ShoppingBag class="w-5 h-5 sm:w-6 sm:h-6 mr-1 sm:mr-2" />
+        <span class="hidden sm:inline">Review</span>
       </div>
     </div>
 
@@ -162,68 +301,53 @@ async function completeOrder() {
     <ErrorMessage v-if="error" :message="error" @dismiss="error = null" class="mb-6" />
 
     <!-- Step 1: Shipping Address -->
-    <div v-if="step === 1" class="bg-white rounded-lg shadow-md p-8 space-y-6">
+    <div v-show="step === 1" class="bg-white rounded-lg shadow-md p-8 space-y-6">
       <h2 class="text-2xl font-bold text-gray-900">Shipping Address</h2>
 
-      <div class="grid grid-cols-2 gap-4">
-        <input v-model="formData.firstName" type="text" placeholder="First Name" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent" />
-        <input v-model="formData.lastName" type="text" placeholder="Last Name" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent" />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input v-model="formData.firstName" type="text" placeholder="First Name" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+        <input v-model="formData.lastName" type="text" placeholder="Last Name" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
       </div>
 
-      <input v-model="formData.email" type="email" placeholder="Email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent" />
+      <input v-model="formData.email" type="email" placeholder="Email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
       <input v-model="formData.phone" type="tel" placeholder="Phone Number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent" />
       <input v-model="formData.address" type="text" placeholder="Street Address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent" />
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <input v-model="formData.city" type="text" placeholder="City" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent" />
         <input v-model="formData.postalCode" type="text" placeholder="Postal Code" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent" />
       </div>
 
-      <div class="flex gap-4 mt-8">
-        <router-link to="/cart" class="btn-outline flex-1 text-center">Back to Cart</router-link>
-        <button @click="nextStep" class="btn-primary flex-1">Continue to Payment</button>
+      <div class="flex flex-col sm:flex-row gap-4 mt-8">
+        <button @click="router.push('/cart')" class="btn-outline w-full sm:flex-1">Back to Cart</button>
+        <button @click="nextStep" class="btn-primary w-full sm:flex-1">Continue to Payment</button>
       </div>
     </div>
 
     <!-- Step 2: Payment Information -->
-    <div v-if="step === 2" class="bg-white rounded-lg shadow-md p-8 space-y-6">
+    <div v-show="step === 2" class="bg-white rounded-lg shadow-md p-8 space-y-6">
       <h2 class="text-2xl font-bold text-gray-900">Payment Information</h2>
 
       <input v-model="formData.cardName" type="text" placeholder="Cardholder Name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent" />
 
-      <input
-        v-model="formData.cardNumber"
-        type="text"
-        placeholder="1234 5678 9012 3456"
-        @input="formData.cardNumber = formatCardNumber($event.target.value)"
-        maxlength="19"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
-      />
-
-      <div class="grid grid-cols-2 gap-4">
-        <input
-          v-model="formData.cardExpiry"
-          type="text"
-          placeholder="MM/YY"
-          @input="formData.cardExpiry = formatExpiry($event.target.value)"
-          maxlength="5"
-          class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
-        />
-        <input v-model="formData.cardCVC" type="text" placeholder="CVC" maxlength="3" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent" />
+      <div class="w-full">
+        <div ref="cardElement" id="card-element" class="px-4 py-2 border border-gray-300 rounded-lg min-h-[56px]"></div>
       </div>
 
       <div class="bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
         <strong>Demo Mode:</strong> Use test card 4242 4242 4242 4242, any future expiry, and any CVC.
       </div>
 
-      <div class="flex gap-4 mt-8">
-        <button @click="prevStep" class="btn-outline flex-1">Back</button>
-        <button @click="nextStep" class="btn-primary flex-1">Review Order</button>
+      <div class="flex flex-col sm:flex-row gap-4 mt-8">
+        <button @click="prevStep" class="btn-outline w-full sm:flex-1">Back</button>
+        <button @click="nextStep" :disabled="stripeInitializing || !paymentReady" class="btn-primary w-full sm:flex-1">
+          {{ stripeInitializing ? 'Loading payment form...' : 'Review Order' }}
+        </button>
       </div>
     </div>
 
     <!-- Step 3: Review Order -->
-    <div v-if="step === 3" class="bg-white rounded-lg shadow-md p-8 space-y-6">
+    <div v-show="step === 3" class="bg-white rounded-lg shadow-md p-8 space-y-6">
       <h2 class="text-2xl font-bold text-gray-900">Review Your Order</h2>
 
       <div class="space-y-3 border-b pb-6">
@@ -262,9 +386,9 @@ async function completeOrder() {
         </div>
       </div>
 
-      <div class="flex gap-4 mt-8">
-        <button @click="prevStep" class="btn-outline flex-1">Back</button>
-        <button @click="completeOrder" :disabled="loading" class="btn-primary flex-1">
+      <div class="flex flex-col sm:flex-row gap-4 mt-8">
+        <button @click="prevStep" class="btn-outline w-full sm:flex-1">Back</button>
+        <button @click="completeOrder" :disabled="loading" class="btn-primary w-full sm:flex-1">
           {{ loading ? 'Processing...' : 'Complete Order' }}
         </button>
       </div>

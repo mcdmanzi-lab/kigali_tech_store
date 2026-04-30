@@ -1,33 +1,168 @@
+@import './base.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import './base.css';
+/* Project component layer: structured utility-based components */
+@layer components {
+  /* 
+   * Removing .site-container 
+   * The application uses 'container mx-auto' in App.vue, so site-container is redundant 
+   * and causes double-padding.
+   */
+
+  /* Header */
+  .site-header {
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    color: #ffffff;
+    background-color: #FFD700;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .btn-primary:hover { background-color: #FFA500 }
+
+  .btn-secondary {
+    color: #ffffff;
+    background-color: #00B854;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .btn-secondary:hover { background-color: #008C45 }
+
+  .btn-outline {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 2px solid #FFD700;
+    color: #FFD700;
+  }
+
+  .btn-outline:hover { background-color: #FFE700 }
+
+  /* Card */
+  .card {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s ease;
+    padding: 1rem;
+  }
+
+  .card-lg { padding: 1.5rem }
+
+  /* Form Controls */
+  input, textarea, select {
+    width: 100%;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  textarea,
+  select {
+    padding: 0.75rem 1rem;
+    border: 1.5px solid #D1D5DB; /* Slightly thicker, more visible border */
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    background-color: #FFFFFF;
+    transition: all 0.2s ease;
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="tel"]:focus,
+  input[type="number"]:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: #FFD700;
+    box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.2); /* Softer, larger focus ring */
+  }
+
+  /* Improved Cards */
+  .card {
+    transition: all 0.3s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+
+  /* Utilities */
+  .muted { color: #6B7280 }
+  .lead { color: #374151; line-height: 1.6 }
+  
+  /* Spacing utilities */
+  .gap-sm { gap: 0.5rem; }
+  .gap-md { gap: 1rem; }
+  .gap-lg { gap: 1.5rem; }
+  
+  /* Text utilities */
+  .text-muted-light { color: #9CA3AF; }
+  .text-muted-dark { color: #4B5563; }
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 #app {
-  @apply min-h-screen bg-gray-50;
+  min-height: 100vh;
+  background-color: #F9FAFB;
+  display: flex;
+  flex-direction: column;
 }
 
-a {
-  @apply text-primary-DEFAULT hover:text-primary-dark transition-colors duration-200;
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.btn {
-  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }
 
-.btn-primary {
-  @apply btn bg-primary-DEFAULT hover:bg-primary-dark text-white;
+::-webkit-scrollbar-thumb {
+  background: #FFD700;
+  border-radius: 4px;
 }
 
-.btn-secondary {
-  @apply btn bg-secondary-DEFAULT hover:bg-secondary-dark text-white;
+::-webkit-scrollbar-thumb:hover {
+  background: #FFA500;
 }
 
-.btn-outline {
-  @apply btn border-2 border-primary-DEFAULT text-primary-DEFAULT hover:bg-primary-light;
-}
-
-.card {
-  @apply bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200;
-}

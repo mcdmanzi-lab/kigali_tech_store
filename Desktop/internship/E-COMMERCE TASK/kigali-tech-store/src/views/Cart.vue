@@ -51,7 +51,7 @@ function proceedToCheckout() {
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Cart Items -->
       <div class="lg:col-span-2 space-y-4">
-        <div v-for="item in cartItems" :key="item.id" class="bg-white rounded-lg shadow-sm p-6 flex gap-4">
+        <div v-for="item in cartItems" :key="item.id" class="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-primary transition-colors p-4 sm:p-6 flex flex-col sm:flex-row gap-4">
           <!-- Product Image -->
           <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
             <img :src="item.image" :alt="item.title" class="w-full h-full object-cover" />
@@ -61,13 +61,13 @@ function proceedToCheckout() {
           <div class="flex-grow">
             <h3 class="font-semibold text-gray-900 mb-1">{{ item.title }}</h3>
             <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ item.description }}</p>
-            <p class="text-sm font-semibold text-primary-DEFAULT">
+            <p class="text-sm font-semibold text-primary">
               RWF {{ Math.round(item.price * 1200).toLocaleString() }}
             </p>
           </div>
 
           <!-- Quantity & Remove -->
-          <div class="flex flex-col items-end gap-3">
+          <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-4 sm:gap-3 w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-gray-100">
             <div class="flex items-center space-x-2">
               <button
                 @click="updateQuantity(item.id, item.quantity - 1)"
@@ -125,7 +125,7 @@ function proceedToCheckout() {
             Proceed to Checkout
           </button>
 
-          <router-link to="/products" class="btn-outline w-full text-center">
+          <router-link to="/products" class="btn-outline w-full text-center flex justify-center items-center">
             Continue Shopping
           </router-link>
         </div>

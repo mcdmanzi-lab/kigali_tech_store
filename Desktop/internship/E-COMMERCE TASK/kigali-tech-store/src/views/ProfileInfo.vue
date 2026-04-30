@@ -21,7 +21,7 @@ const totalSpent = computed(() => {
     <!-- Profile Card -->
     <div class="bg-white rounded-lg shadow-md p-8">
       <div class="flex items-start space-x-6">
-        <div class="w-20 h-20 bg-gradient-to-br from-primary-DEFAULT to-secondary-DEFAULT rounded-full flex items-center justify-center">
+          <div class="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center">
           <User class="w-10 h-10 text-white" />
         </div>
         <div class="flex-grow">
@@ -44,7 +44,7 @@ const totalSpent = computed(() => {
       </div>
       <div class="bg-white rounded-lg shadow-md p-6">
         <p class="text-gray-600 text-sm mb-2">Member Status</p>
-        <p class="text-3xl font-bold text-secondary-DEFAULT">Gold</p>
+        <p class="text-3xl font-bold text-secondary">Gold</p>
       </div>
     </div>
 

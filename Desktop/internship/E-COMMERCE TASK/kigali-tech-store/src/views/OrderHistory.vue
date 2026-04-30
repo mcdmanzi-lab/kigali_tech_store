@@ -43,7 +43,7 @@ const isEmpty = computed(() => orders.value.length === 0)
           <div>
             <p class="text-xs text-gray-500 uppercase">Total</p>
             <div class="flex items-center space-x-1">
-              <DollarSign class="w-4 h-4 text-primary-DEFAULT" />
+              <DollarSign class="w-4 h-4 text-primary" />
               <p class="text-lg font-bold text-gray-900">RWF {{ Math.round(order.total * 1200).toLocaleString() }}</p>
             </div>
           </div>
